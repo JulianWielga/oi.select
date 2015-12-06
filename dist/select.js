@@ -383,9 +383,15 @@ angular.module('oi.select')
                 valuesFn              = $parse(valuesFnName),
                 trackByFn             = $parse(trackByName);
 
-            var multiplePlaceholderFn = $interpolate(attrs.multiplePlaceholder || ''),
-                placeholderFn         = $interpolate(attrs.placeholder || ''),
-                optionsFn             = $parse(attrs.oiSelectOptions),
+            function multiplePlaceholderFn(scope) {
+                return $interpolate(attrs.multiplePlaceholder || '')(scope);
+            }
+
+            function placeholderFn(scope) {
+                return $interpolate(attrs.placeholder || '')(scope);
+            }
+
+            var optionsFn             = $parse(attrs.oiSelectOptions),
                 isOldAngular          = angular.version.major <= 1 && angular.version.minor <= 3;
 
             var keyUpDownWerePressed,
@@ -477,6 +483,9 @@ angular.module('oi.select')
                 });
 
                 scope.$on('$destroy', unbindFocusBlur);
+
+                scope.$watch(placeholderFn, modifyPlaceholder);
+                scope.$watch(multiplePlaceholderFn, modifyPlaceholder);
 
                 scope.$parent.$watch(attrs.multipleLimit, function(value) {
                      multipleLimit = Number(value) || Infinity;
@@ -874,8 +883,8 @@ angular.module('oi.select')
                 }
 
                 function modifyPlaceholder() {
-                    var currentPlaceholder = multiple && exists(ctrl.$modelValue) ? multiplePlaceholder : placeholder;
-                    inputElement.attr('placeholder', currentPlaceholder);
+                    var currentPlaceholder = multiple && exists(ctrl.$modelValue) ? multiplePlaceholderFn : placeholderFn;
+                    inputElement.attr('placeholder', currentPlaceholder(scope));
                 }
 
                 function trackBy(item) {
